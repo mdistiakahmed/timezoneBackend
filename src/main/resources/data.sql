@@ -1,14 +1,14 @@
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS t_user_authority;
+DROP TABLE IF EXISTS t_authority;
+DROP TABLE IF EXISTS t_user;
 
 
-create table users (id serial PRIMARY KEY, email varchar(255), password varchar(255));
-create table role (id serial PRIMARY KEY, description varchar(255), name varchar(255));
-create table user_roles (user_id INT NOT NULL, role_id INT NOT NULL, PRIMARY KEY (user_id, role_id),FOREIGN KEY (role_id) REFERENCES role (id),FOREIGN KEY (user_id) REFERENCES users (id));
+create table t_user (id serial PRIMARY KEY, email varchar(255), password varchar(255));
+create table t_authority (name VARCHAR(255) PRIMARY KEY);
+create table t_user_authority (user_id INT NOT NULL, authority_name VARCHAR(255) NOT NULL, PRIMARY KEY (user_id, authority_name),FOREIGN KEY (authority_name) REFERENCES t_authority (name),FOREIGN KEY (user_id) REFERENCES t_user (id));
 
-INSERT INTO role (id, description, name) VALUES (4, 'Admin role', 'ADMIN');
-INSERT INTO role (id, description, name) VALUES (5, 'User role', 'USER');
+INSERT INTO t_authority (name) VALUES ('ADMIN_ROLE');
+INSERT INTO t_authority (name) VALUES ('USER_ROLE');
 
-INSERT INTO users (id, email, password) VALUES (500, 'admin@gmail.com', '$2a$10$JquPqGKGKSplSc/lvHpsJedbK/xqe2Vghqw.nE17tNdB.UWcIVQ7K');
-INSERT INTO user_roles (user_id, role_id) VALUES (500, 4);
+INSERT INTO t_user (id, email, password) VALUES (500, 'admin@gmail.com', '$2a$10$JquPqGKGKSplSc/lvHpsJedbK/xqe2Vghqw.nE17tNdB.UWcIVQ7K');
+INSERT INTO t_user_authority (user_id, authority_name) VALUES (500, 'ADMIN_ROLE');
