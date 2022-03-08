@@ -7,8 +7,10 @@ create table t_user (id serial PRIMARY KEY, email varchar(255), password varchar
 create table t_authority (name VARCHAR(255) PRIMARY KEY);
 create table t_user_authority (user_id INT NOT NULL, authority_name VARCHAR(255) NOT NULL, PRIMARY KEY (user_id, authority_name),FOREIGN KEY (authority_name) REFERENCES t_authority (name),FOREIGN KEY (user_id) REFERENCES t_user (id));
 
-INSERT INTO t_authority (name) VALUES ('ADMIN_ROLE');
-INSERT INTO t_authority (name) VALUES ('USER_ROLE');
+INSERT INTO t_authority (name) VALUES ('ROLE_ADMIN');
+INSERT INTO t_authority (name) VALUES ('ROLE_USER');
 
 INSERT INTO t_user (id, email, password) VALUES (500, 'admin@gmail.com', '$2a$10$JquPqGKGKSplSc/lvHpsJedbK/xqe2Vghqw.nE17tNdB.UWcIVQ7K');
-INSERT INTO t_user_authority (user_id, authority_name) VALUES (500, 'ADMIN_ROLE');
+INSERT INTO t_user (id, email, password) VALUES (501, 'user', '$2a$12$TIRkqFy3oTmmVMYVqKa.yeRnmhTOmejLW9UdjmWs7LWTzaRq/E6JK');
+INSERT INTO t_user_authority (user_id, authority_name) VALUES (500, 'ROLE_ADMIN');
+INSERT INTO t_user_authority (user_id, authority_name) VALUES (501, 'ROLE_USER');
