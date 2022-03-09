@@ -1,8 +1,11 @@
 package com.istiak.timezone.controller;
 
 import com.istiak.timezone.config.JwtUtil;
+import com.istiak.timezone.constants.RestApiConstants;
 import com.istiak.timezone.model.AuthorityConstants;
 import com.istiak.timezone.model.UserDTO;
+import com.istiak.timezone.model.UserResponse;
+import com.istiak.timezone.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +29,9 @@ public class UserController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/test")
     public String testMethod() {
@@ -73,11 +79,17 @@ public class UserController {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
-    public ResponseEntity<Void> getAllUser(){
-        return ResponseEntity.ok().build();// Pagination
+    public ResponseEntity<UserResponse> getAllUser(
+            @RequestParam(value = "pageNo", defaultValue = RestApiConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
+            @RequestParam(value = "pageSize", defaultValue = RestApiConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize,
+            @RequestParam(value = "sortBy", defaultValue = RestApiConstants.DEFAULT_SORT_BY, required = false) String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = RestApiConstants.DEFAULT_SORT_DIRECTION, required = false) String sortDir
+    ){
+        UserResponse userResponse = userService.getAllUser(pageNo,pageSize,sortBy,sortDir);
+        return ResponseEntity.ok(userResponse);
     }
 
-    @RequestMapping(value="users",
+    @RequestMapping(value="users/{userId}",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
