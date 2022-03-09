@@ -4,6 +4,7 @@ import com.istiak.timezone.config.JwtUtil;
 import com.istiak.timezone.model.AuthorityConstants;
 import com.istiak.timezone.model.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.security.RolesAllowed;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -66,5 +66,46 @@ public class UserController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         final String token = jwtUtil.generateToken(authentication);
         return ResponseEntity.ok(Collections.singletonMap("token", token));
+    }
+
+
+    @RequestMapping(value="users",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @RolesAllowed({AuthorityConstants.ADMIN})
+    public ResponseEntity<Void> getAllUser(){
+        return ResponseEntity.ok().build();// Pagination
+    }
+
+    @RequestMapping(value="users",
+            method = RequestMethod.GET,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @RolesAllowed({AuthorityConstants.ADMIN})
+    public ResponseEntity<Void> getSingleUser(@PathVariable String userId){
+        return ResponseEntity.ok().build();
+    }
+
+    @RequestMapping(value="users",
+            method = RequestMethod.POST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createUser(@RequestBody UserDTO user){
+        return ResponseEntity.ok().build();
+    }
+
+    @RequestMapping(value="users",
+            method = RequestMethod.PUT,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @RolesAllowed({AuthorityConstants.ADMIN})
+    public ResponseEntity<Void> updateUser(@RequestBody UserDTO userUpdate){
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @RequestMapping(value="users",
+            method = RequestMethod.DELETE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @RolesAllowed({AuthorityConstants.ADMIN})
+    public ResponseEntity<Void> deleteUser(@PathVariable String userId){
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
