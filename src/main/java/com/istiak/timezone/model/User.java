@@ -39,4 +39,16 @@ public class User {
     private String password;
 
 
+    public static User of(UserDTO userDTO) {
+        User user = new User();
+        user.setEmail(userDTO.getUsername());
+        user.setPassword(userDTO.getPassword());
+        user.setFirstname(userDTO.getFirstname());
+        user.setLastname(userDTO.getLastname());
+        user.setSysadmin(userDTO.getSysadmin());
+
+        return user;
+    }
+
+
 }

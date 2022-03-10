@@ -10,11 +10,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class UserService {
     @Autowired
     private UserRepository UserRepository;
@@ -38,5 +41,40 @@ public class UserService {
         userResponse.setLast(users.isLast());
 
         return userResponse;
+    }
+
+    public UserDTO getSingleUser(Long id) {
+        Optional<User> user = UserRepository.findById(id);
+        UserDTO userDTO = null;
+        if(user.isPresent()) {
+            userDTO = UserDTO.of(user.get());
+        }
+        return userDTO;
+    }
+
+    public void createUser(UserDTO userDTO) {
+        User user = User.of(userDTO);
+        UserRepository.saveAndFlush(user);
+    }
+
+    public boolean updateUser(UserDTO userDTO) {
+        User user = UserRepository.findByEmail(userDTO.getUsername());
+        if(user != null && userDTO.getUsername() != null) {
+            user.setFirstname(userDTO.getFirstname());
+            user.setLastname(userDTO.getLastname());
+            user.setSysadmin(userDTO.getSysadmin());
+
+            UserRepository.saveAndFlush(user);
+
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public boolean deleteUser(String username) {
+        long count = UserRepository.deleteByEmail(username);
+        return (count>0);
     }
 }

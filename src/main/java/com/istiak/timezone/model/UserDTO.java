@@ -1,10 +1,10 @@
 package com.istiak.timezone.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserDTO {
     private String username;
     private String firstname;
