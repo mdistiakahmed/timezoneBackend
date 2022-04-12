@@ -1,9 +1,7 @@
 package com.istiak.timezone.service;
 
-import com.istiak.timezone.model.User;
-import com.istiak.timezone.model.UserDTO;
-import com.istiak.timezone.model.UserData;
-import com.istiak.timezone.model.UserResponse;
+import com.istiak.timezone.model.*;
+import com.istiak.timezone.repository.AuthorityRepository;
 import com.istiak.timezone.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,7 +20,10 @@ import java.util.stream.Collectors;
 @Transactional
 public class UserService {
     @Autowired
-    private UserRepository UserRepository;
+    private UserRepository userRepository;
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
 
     @Autowired
     private BCryptPasswordEncoder bcryptEncoder;
@@ -31,7 +32,7 @@ public class UserService {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<User> users = UserRepository.findAll(pageable);
+        Page<User> users = userRepository.findAll(pageable);
 
         List<UserData> userDataList = users.getContent().stream()
                 .map(u -> UserData.of(u))
@@ -49,7 +50,7 @@ public class UserService {
     }
 
     public UserData getSingleUser(Long id) {
-        Optional<User> user = UserRepository.findById(id);
+        Optional<User> user = userRepository.findById(id);
         UserData userData = null;
         if(user.isPresent()) {
             userData = UserData.of(user.get());
@@ -57,28 +58,39 @@ public class UserService {
         return userData;
     }
 
-    public void createUser(UserDTO userDTO) {
+    public User createUser(UserDTO userDTO) {
         User user = User.of(userDTO);
         user.setPassword(bcryptEncoder.encode(user.getPassword()));
-        UserRepository.saveAndFlush(user);
+        User createdUser =  userRepository.save(user);
+        List<Authority> authorityList = authorityRepository.findAll();
+        if(!userDTO.getSysadmin()) {
+            authorityList = authorityList.stream().filter(a -> !a.getName().equalsIgnoreCase(AuthorityConstants.ADMIN) ).collect(Collectors.toList());
+        }
+        for(Authority a : authorityList) {
+            authorityRepository.insertUserAuthorities(userDTO.getUsername(),a.getName());
+        }
+
+        return createdUser;
     }
 
-    public boolean updateUser(UserData userData) {
-        User user = UserRepository.findByEmail(userData.getUsername());
-        if(user != null && userData.getUsername() != null) {
+    public void updateUser(UserData userData) {
+        User user = userRepository.findByEmail(userData.getUsername());
+        if (user != null && userData.getUsername() != null) {
+            // Same , nothing to update
+            if (userData.getSysadmin() == user.getSysadmin()) {
+                return;
+            }
             user.setSysadmin(userData.getSysadmin());
+            userRepository.save(user);
+            authorityRepository.updateUserAuthorities(userData.getUsername(),
+                    userData.getSysadmin() ? AuthorityConstants.ADMIN : AuthorityConstants.USER);
 
-            UserRepository.saveAndFlush(user);
+        }
 
-            return true;
-        }
-        else {
-            return false;
-        }
     }
 
-    public boolean deleteUser(String username) {
-        long count = UserRepository.deleteByEmail(username);
-        return (count>0);
+    public void deleteUser(String username) {
+        authorityRepository.deleteUserAuthorities(username);
+        long count = userRepository.deleteByEmail(username);
     }
 }

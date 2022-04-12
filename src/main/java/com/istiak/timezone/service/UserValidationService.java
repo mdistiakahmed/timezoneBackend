@@ -3,7 +3,9 @@ package com.istiak.timezone.service;
 import com.istiak.timezone.model.User;
 import com.istiak.timezone.model.UserDTO;
 import com.istiak.timezone.repository.UserRepository;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
@@ -22,6 +24,21 @@ public class UserValidationService {
             Pattern.compile(regex);
     @Autowired
     private UserRepository userRepository;
+
+    public String validate(UserDTO userDTO) {
+        String errors = checkIfInvalidData(userDTO);
+        if(errors.length()>0) {
+            JSONObject errorMsg = new JSONObject();
+            errorMsg.put("msg", errors);
+            return errorMsg.toString();
+        }
+        if(checkIfUserExists(userDTO.getUsername())) {
+            JSONObject errorMsg = new JSONObject();
+            errorMsg.put("msg", "User name already exists!");
+            return errorMsg.toString();
+        }
+        return errors;
+    }
 
     public String checkIfInvalidData (UserDTO userDTO) {
         String errorMsg = "";
@@ -48,6 +65,22 @@ public class UserValidationService {
     public Boolean checkIfUserExists (String email) {
         User user = userRepository.findByEmail(email);
         return user == null ? false : true;
+    }
+
+    public String userModifyValidate (String username) {
+        final String authenticatedUser = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+        String errorMsg = "";
+        if(username == null || username.length()==0) {
+            errorMsg = "Username is empty.";
+        } else if(username.equalsIgnoreCase(authenticatedUser)) {
+            errorMsg = "Can't modify own data.";
+        } else {
+            User user = userRepository.findByEmail(username);
+            if(user == null) {
+                errorMsg = "Username is not found";
+            }
+        }
+        return errorMsg;
     }
 
 

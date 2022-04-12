@@ -17,4 +17,19 @@ public class UserDTO {
 
         return userDto;
     }
+
+    /**
+     * Convert SignUp model to UserDto class.
+     * Make sys admin as false during signup
+     * @param userSignUpModel
+     * @return
+     */
+    public static UserDTO of(UserSignUpModel userSignUpModel) {
+        UserDTO userDto = new UserDTO();
+        userDto.setUsername(userSignUpModel.getUsername());
+        userDto.setPassword(userSignUpModel.getPassword());
+        userDto.setSysadmin(false);
+
+        return userDto;
+    }
 }

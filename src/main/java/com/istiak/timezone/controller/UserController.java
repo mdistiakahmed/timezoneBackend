@@ -2,10 +2,7 @@ package com.istiak.timezone.controller;
 
 import com.istiak.timezone.config.JwtUtil;
 import com.istiak.timezone.constants.RestApiConstants;
-import com.istiak.timezone.model.AuthorityConstants;
-import com.istiak.timezone.model.UserDTO;
-import com.istiak.timezone.model.UserData;
-import com.istiak.timezone.model.UserResponse;
+import com.istiak.timezone.model.*;
 import com.istiak.timezone.service.UserService;
 import com.istiak.timezone.service.UserValidationService;
 import org.json.JSONObject;
@@ -14,14 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.security.RolesAllowed;
-import java.util.Collections;
-import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -39,23 +32,6 @@ public class UserController {
 
     @Autowired
     private UserService  userService;
-
-    @RequestMapping(value="signin",
-            method = RequestMethod.POST,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String,String>> authenticateUser(@RequestBody UserDTO userDTO) {
-        final Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        userDTO.getUsername(),
-                        userDTO.getPassword()
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        final String token = jwtUtil.generateToken(authentication);
-        return ResponseEntity.ok(Collections.singletonMap("token", token));
-    }
-
 
     @RequestMapping(value="users",
             method = RequestMethod.GET,
@@ -83,20 +59,14 @@ public class UserController {
         return ResponseEntity.ok(userData);
     }
 
-    @RequestMapping(value={"users","signup"},
+    @RequestMapping(value="users",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createUser(@RequestBody UserDTO userDTO){
-        String errors = userValidationService.checkIfInvalidData(userDTO);
+        // return errors as json
+        String errors = userValidationService.validate(userDTO);
         if(errors.length()>0) {
-            JSONObject errorMsg = new JSONObject();
-            errorMsg.put("msg", errors);
-            return new ResponseEntity<>(errorMsg.toString(),HttpStatus.BAD_REQUEST);
-        }
-        if(userValidationService.checkIfUserExists(userDTO.getUsername())) {
-            JSONObject errorMsg = new JSONObject();
-            errorMsg.put("msg", "User name already exists!");
-            return new ResponseEntity<>(errorMsg.toString(),HttpStatus.CONFLICT);
+            return new ResponseEntity<String>(errors,HttpStatus.BAD_REQUEST);
         }
         userService.createUser(userDTO);
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -107,23 +77,19 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
     public ResponseEntity<?> updateUser(@RequestBody UserData userData){
-        if(userData == null || userData.getUsername()== null || userData.getUsername().length()==0) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if(userData == null) {
+            return new ResponseEntity<>("No data to update",HttpStatus.BAD_REQUEST);
         }
-
-        final String authenticatedUser = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        if(userData.getUsername().equalsIgnoreCase(authenticatedUser)) {
+        String errors = userValidationService.userModifyValidate(userData.getUsername());
+        if(errors.length() > 0) {
             JSONObject errorMsg = new JSONObject();
-            errorMsg.put("msg", "Can't update own data!");
+            errorMsg.put("msg", errors);
             return new ResponseEntity<>(errorMsg.toString(),HttpStatus.BAD_REQUEST);
         }
-        
-        HttpStatus httpStatus = userValidationService.checkIfUserExists(userData.getUsername())? null : HttpStatus.NOT_FOUND;
-        if(httpStatus == null) {
-            httpStatus = userService.updateUser(userData) ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
-        }
 
-        return new ResponseEntity<>(httpStatus);
+        userService.updateUser(userData);
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @RequestMapping(value="users/{username}",
@@ -131,16 +97,14 @@ public class UserController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
     public ResponseEntity<?> deleteUser(@PathVariable String username){
-        if(username == null || username.length()==0) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        final String authenticatedUser = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        if(username.equalsIgnoreCase(authenticatedUser)) {
+        String errors = userValidationService.userModifyValidate(username);
+        if(errors.length() > 0) {
             JSONObject errorMsg = new JSONObject();
-            errorMsg.put("msg", "Can't delete own data!");
+            errorMsg.put("msg", errors);
             return new ResponseEntity<>(errorMsg.toString(),HttpStatus.BAD_REQUEST);
         }
-        HttpStatus httpStatus = userService.deleteUser(username)? HttpStatus.OK : HttpStatus.BAD_REQUEST;
-        return new ResponseEntity<>(httpStatus);
+        userService.deleteUser(username);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
+
 }

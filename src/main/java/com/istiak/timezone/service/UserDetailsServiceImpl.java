@@ -32,7 +32,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     private List<SimpleGrantedAuthority> getAuthority(User user) {
-        Set<String> authorities = authorityRepository.getAuthoritiesForUser(user.getId());
+        Set<String> authorities = authorityRepository.getAuthoritiesForUser(user.getEmail());
         List<SimpleGrantedAuthority> grantedAuthorities = authorities.
                 stream().map(authority -> new SimpleGrantedAuthority(authority))
                 .collect(Collectors.toList());
