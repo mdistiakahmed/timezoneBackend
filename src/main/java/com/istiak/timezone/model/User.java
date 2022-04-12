@@ -20,15 +20,6 @@ public class User {
     @Column(length = 50, unique = true, nullable = false)
     private String email;
 
-    @NotNull
-    @Size(min = 1, max = 50)
-    @Column(length = 50, nullable = false)
-    private String firstname;
-
-    @Size(min = 1, max = 50)
-    @Column(length = 50)
-    private String lastname;
-
     @Column(columnDefinition = "boolean default false")
     private Boolean sysadmin;
 
@@ -43,8 +34,6 @@ public class User {
         User user = new User();
         user.setEmail(userDTO.getUsername());
         user.setPassword(userDTO.getPassword());
-        user.setFirstname(userDTO.getFirstname());
-        user.setLastname(userDTO.getLastname());
         user.setSysadmin(userDTO.getSysadmin());
 
         return user;

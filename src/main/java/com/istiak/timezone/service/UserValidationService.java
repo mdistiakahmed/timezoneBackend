@@ -6,15 +6,59 @@ import com.istiak.timezone.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Service
 public class UserValidationService {
+    public final Pattern VALID_EMAIL_ADDRESS_REGEX =
+            Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$", Pattern.CASE_INSENSITIVE);
 
+    String regex = "^(?=.*[0-9])" // digit at least once
+            + "(?=.*[a-z])(?=.*[A-Z])" // upper and lower case at least once
+            + "(?=.*[@#$%^&+=])" // special charater at least once
+            + "(?=\\S+$).{8,20}$"; // no white space and length min 8, max 20
+    public final Pattern VALID_PASSWORD_REGEX =
+            Pattern.compile(regex);
     @Autowired
     private UserRepository userRepository;
 
-    public Boolean checkIfUserExists (UserDTO userDTO) {
-        User user = userRepository.findByEmail(userDTO.getUsername());
+    public String checkIfInvalidData (UserDTO userDTO) {
+        String errorMsg = "";
+        if(userDTO == null) {
+            errorMsg += "No user information.";
+            return errorMsg;
+        }
+
+        if(userDTO.getUsername() == null || userDTO.getUsername().length()==0) {
+            errorMsg += "Email should not be null.";
+        } else if(!validateEmail(userDTO.getUsername())) {
+            errorMsg += "Email is not valid.";
+        }
+
+        if(userDTO.getPassword() == null || userDTO.getPassword().length() == 0) {
+            errorMsg += "Password can not be empty.";
+        } else if(!validatePassword(userDTO.getPassword())) {
+            errorMsg += "Password must contain upper case,lower case, digits and special characters.Max length 20, min length 8.";
+        }
+
+        return errorMsg;
+    }
+
+    public Boolean checkIfUserExists (String email) {
+        User user = userRepository.findByEmail(email);
         return user == null ? false : true;
+    }
+
+
+    private boolean validateEmail(String emailStr) {
+        Matcher matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr);
+        return matcher.find();
+    }
+
+    private boolean validatePassword(String password) {
+        Matcher matcher = VALID_PASSWORD_REGEX.matcher(password);
+        return matcher.find();
     }
 
 }
