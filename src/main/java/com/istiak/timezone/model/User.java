@@ -30,11 +30,11 @@ public class User {
     private String password;
 
 
-    public static User of(UserDTO userDTO) {
+    public static User of(UserCreateModel userCreateModel) {
         User user = new User();
-        user.setEmail(userDTO.getUsername());
-        user.setPassword(userDTO.getPassword());
-        user.setSysadmin(userDTO.getSysadmin());
+        user.setEmail(userCreateModel.getEmail());
+        user.setPassword(userCreateModel.getPassword());
+        user.setSysadmin(userCreateModel.getSysadmin());
 
         return user;
     }

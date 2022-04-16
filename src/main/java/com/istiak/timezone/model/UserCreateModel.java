@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserSignUpModel {
-    private String username;
+public class UserCreateModel {
+    private String email;
     private String password;
-
-
+    private Boolean sysadmin;
 }

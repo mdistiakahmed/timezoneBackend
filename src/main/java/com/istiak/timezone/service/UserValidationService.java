@@ -1,7 +1,7 @@
 package com.istiak.timezone.service;
 
 import com.istiak.timezone.model.User;
-import com.istiak.timezone.model.UserDTO;
+import com.istiak.timezone.model.UserCreateModel;
 import com.istiak.timezone.repository.UserRepository;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,23 +16,20 @@ public class UserValidationService {
     public final Pattern VALID_EMAIL_ADDRESS_REGEX =
             Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$", Pattern.CASE_INSENSITIVE);
 
-    String regex = "^(?=.*[0-9])" // digit at least once
-            + "(?=.*[a-z])(?=.*[A-Z])" // upper and lower case at least once
-            + "(?=.*[@#$%^&+=])" // special charater at least once
-            + "(?=\\S+$).{8,20}$"; // no white space and length min 8, max 20
+    String regex = "(?=\\S+$).{6,20}$"; // no white space and length min 8, max 20
     public final Pattern VALID_PASSWORD_REGEX =
             Pattern.compile(regex);
     @Autowired
     private UserRepository userRepository;
 
-    public String validate(UserDTO userDTO) {
-        String errors = checkIfInvalidData(userDTO);
+    public String validate(UserCreateModel userCreateModel) {
+        String errors = checkIfInvalidData(userCreateModel);
         if(errors.length()>0) {
             JSONObject errorMsg = new JSONObject();
             errorMsg.put("msg", errors);
             return errorMsg.toString();
         }
-        if(checkIfUserExists(userDTO.getUsername())) {
+        if(checkIfUserExists(userCreateModel.getEmail())) {
             JSONObject errorMsg = new JSONObject();
             errorMsg.put("msg", "User name already exists!");
             return errorMsg.toString();
@@ -40,23 +37,23 @@ public class UserValidationService {
         return errors;
     }
 
-    public String checkIfInvalidData (UserDTO userDTO) {
+    public String checkIfInvalidData (UserCreateModel userCreateModel) {
         String errorMsg = "";
-        if(userDTO == null) {
+        if(userCreateModel == null) {
             errorMsg += "No user information.";
             return errorMsg;
         }
 
-        if(userDTO.getUsername() == null || userDTO.getUsername().length()==0) {
+        if(userCreateModel.getEmail() == null || userCreateModel.getEmail().length()==0) {
             errorMsg += "Email should not be null.";
-        } else if(!validateEmail(userDTO.getUsername())) {
+        } else if(!validateEmail(userCreateModel.getEmail())) {
             errorMsg += "Email is not valid.";
         }
 
-        if(userDTO.getPassword() == null || userDTO.getPassword().length() == 0) {
+        if(userCreateModel.getPassword() == null || userCreateModel.getPassword().length() == 0) {
             errorMsg += "Password can not be empty.";
-        } else if(!validatePassword(userDTO.getPassword())) {
-            errorMsg += "Password must contain upper case,lower case, digits and special characters.Max length 20, min length 8.";
+        } else if(!validatePassword(userCreateModel.getPassword())) {
+            errorMsg += "Password must be between 6 to 20 characters long";
         }
 
         return errorMsg;

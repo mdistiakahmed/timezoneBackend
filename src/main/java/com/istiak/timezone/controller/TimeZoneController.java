@@ -4,7 +4,6 @@ import com.istiak.timezone.constants.RestApiConstants;
 import com.istiak.timezone.model.AuthorityConstants;
 import com.istiak.timezone.model.Timezone;
 import com.istiak.timezone.model.TimezoneResponse;
-import com.istiak.timezone.model.UserDTO;
 import com.istiak.timezone.service.TimezoneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

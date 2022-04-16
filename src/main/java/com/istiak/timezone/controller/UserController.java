@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.security.RolesAllowed;
@@ -37,38 +36,26 @@ public class UserController {
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
-    public ResponseEntity<UserResponse> getAllUser(
+    public ResponseEntity<UserTableResponse> getAllUser(
             @RequestParam(value = "pageNo", defaultValue = RestApiConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
             @RequestParam(value = "pageSize", defaultValue = RestApiConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize,
             @RequestParam(value = "sortBy", defaultValue = RestApiConstants.DEFAULT_SORT_BY, required = false) String sortBy,
             @RequestParam(value = "sortDir", defaultValue = RestApiConstants.DEFAULT_SORT_DIRECTION, required = false) String sortDir
     ){
-        UserResponse userResponse = userService.getAllUser(pageNo,pageSize,sortBy,sortDir);
-        return ResponseEntity.ok(userResponse);
-    }
-
-    @RequestMapping(value="users/{id}",
-            method = RequestMethod.GET,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @RolesAllowed({AuthorityConstants.ADMIN})
-    public ResponseEntity<UserData> getSingleUser(@PathVariable Long id){
-        UserData userData = userService.getSingleUser(id);
-        if(userData == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return ResponseEntity.ok(userData);
+        UserTableResponse userTableResponse = userService.getAllUser(pageNo,pageSize,sortBy,sortDir);
+        return ResponseEntity.ok(userTableResponse);
     }
 
     @RequestMapping(value="user",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> createUser(@RequestBody UserDTO userDTO){
+    public ResponseEntity<String> createUser(@RequestBody UserCreateModel userCreateModel){
         // return errors as json
-        String errors = userValidationService.validate(userDTO);
+        String errors = userValidationService.validate(userCreateModel);
         if(errors.length()>0) {
             return new ResponseEntity<String>(errors,HttpStatus.BAD_REQUEST);
         }
-        userService.createUser(userDTO);
+        userService.createUser(userCreateModel);
         return new ResponseEntity<>("User Created",HttpStatus.CREATED);
     }
 
@@ -76,18 +63,18 @@ public class UserController {
             method = RequestMethod.PUT,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
-    public ResponseEntity<?> updateUser(@RequestBody UserData userData){
-        if(userData == null) {
+    public ResponseEntity<?> updateUser(@RequestBody UserUpdateModel userUpdateModel){
+        if(userUpdateModel == null) {
             return new ResponseEntity<>("No data to update",HttpStatus.BAD_REQUEST);
         }
-        String errors = userValidationService.userModifyValidate(userData.getUsername());
+        String errors = userValidationService.userModifyValidate(userUpdateModel.getEmail());
         if(errors.length() > 0) {
             JSONObject errorMsg = new JSONObject();
             errorMsg.put("msg", errors);
             return new ResponseEntity<>(errorMsg.toString(),HttpStatus.BAD_REQUEST);
         }
 
-        userService.updateUser(userData);
+        userService.updateUser(userUpdateModel);
 
         return new ResponseEntity<>("User Updated",HttpStatus.OK);
     }

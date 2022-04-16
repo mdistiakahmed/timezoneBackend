@@ -1,9 +1,7 @@
 package com.istiak.timezone.controller;
 
 import com.istiak.timezone.config.JwtUtil;
-import com.istiak.timezone.model.User;
-import com.istiak.timezone.model.UserDTO;
-import com.istiak.timezone.model.UserSignUpModel;
+import com.istiak.timezone.model.*;
 import com.istiak.timezone.service.UserService;
 import com.istiak.timezone.service.UserValidationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,38 +33,37 @@ public class AuthorityController {
     @Autowired
     private UserService userService;
 
-    @RequestMapping(value="signin",
+    @RequestMapping(value="sign-in",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String,String>> authenticateUser(@RequestBody UserDTO userDTO) {
-        final String token = authenticateAndGenerateToken(userDTO);
+    public ResponseEntity<Map<String,String>> authenticateUser(@RequestBody UserSignInModel userSignInModel) {
+        final String token = authenticateAndGenerateToken(userSignInModel.getEmail(), userSignInModel.getPassword());
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
 
-    @RequestMapping(value="signup",
+    @RequestMapping(value="sign-up",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> userSignUp(@RequestBody UserSignUpModel userSignUpModel){
-        UserDTO userDTO = UserDTO.of(userSignUpModel);
+    public ResponseEntity<?> userSignUp(@RequestBody UserCreateModel userCreateModel){
         // return errors as json
-        String errors = userValidationService.validate(userDTO);
+        String errors = userValidationService.validate(userCreateModel);
         if(errors.length()>0) {
             return new ResponseEntity<String>(errors, HttpStatus.BAD_REQUEST);
         }
 
-        User createdUser = userService.createUser(userDTO);
+        User createdUser = userService.createUser(userCreateModel);
         if(createdUser == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        String token = authenticateAndGenerateToken(userDTO);
+        String token = authenticateAndGenerateToken(userCreateModel.getEmail(), userCreateModel.getPassword());
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
 
-    private String authenticateAndGenerateToken(UserDTO userDTO) {
+    private String authenticateAndGenerateToken(String username, String password) {
         final Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        userDTO.getUsername(),
-                        userDTO.getPassword()
+                        username,
+                        password
                 )
         );
 
