@@ -63,9 +63,9 @@ public class UserService {
         user.setPassword(bcryptEncoder.encode(user.getPassword()));
         User createdUser =  userRepository.save(user);
         List<Authority> authorityList = authorityRepository.findAll();
-        if(!userDTO.getSysadmin()) {
-            authorityList = authorityList.stream().filter(a -> !a.getName().equalsIgnoreCase(AuthorityConstants.ADMIN) ).collect(Collectors.toList());
-        }
+        authorityList = authorityList.stream()
+                .filter(a -> !a.getName().equalsIgnoreCase(userDTO.getSysadmin()?AuthorityConstants.USER: AuthorityConstants.ADMIN) )
+                .collect(Collectors.toList());
         for(Authority a : authorityList) {
             authorityRepository.insertUserAuthorities(userDTO.getUsername(),a.getName());
         }

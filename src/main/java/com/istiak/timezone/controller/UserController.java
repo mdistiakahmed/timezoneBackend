@@ -18,7 +18,7 @@ import javax.annotation.security.RolesAllowed;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class UserController {
 
     @Autowired
@@ -59,7 +59,7 @@ public class UserController {
         return ResponseEntity.ok(userData);
     }
 
-    @RequestMapping(value="users",
+    @RequestMapping(value="user",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createUser(@RequestBody UserDTO userDTO){
@@ -69,10 +69,10 @@ public class UserController {
             return new ResponseEntity<String>(errors,HttpStatus.BAD_REQUEST);
         }
         userService.createUser(userDTO);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return new ResponseEntity<>("User Created",HttpStatus.CREATED);
     }
 
-    @RequestMapping(value="users",
+    @RequestMapping(value="user",
             method = RequestMethod.PUT,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
@@ -89,7 +89,7 @@ public class UserController {
 
         userService.updateUser(userData);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>("User Updated",HttpStatus.OK);
     }
 
     @RequestMapping(value="users/{username}",
@@ -104,7 +104,7 @@ public class UserController {
             return new ResponseEntity<>(errorMsg.toString(),HttpStatus.BAD_REQUEST);
         }
         userService.deleteUser(username);
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>("User Deleted",HttpStatus.OK);
     }
 
 }

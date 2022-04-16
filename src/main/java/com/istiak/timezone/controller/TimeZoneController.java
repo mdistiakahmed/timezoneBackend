@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.security.RolesAllowed;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class TimeZoneController {
 
     @Autowired

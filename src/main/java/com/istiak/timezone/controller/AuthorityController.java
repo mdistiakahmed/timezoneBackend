@@ -21,7 +21,7 @@ import java.util.Map;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class AuthorityController {
     @Autowired
     private AuthenticationManager authenticationManager;

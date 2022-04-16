@@ -18,7 +18,7 @@ public class UnauthorizedEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
         HashMap<String, String> map = new HashMap<>(2);
         map.put("uri", request.getRequestURI());
-        map.put("msg", "Authentication failed");
+        map.put("msg", "Use valid username/email and password");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
