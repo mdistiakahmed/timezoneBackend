@@ -12,7 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -21,58 +22,67 @@ public class TimezoneService {
     @Autowired
     private TimezoneRepository timezoneRepository;
 
-    public TimezoneResponse getAllTimeZone(int pageNo, int pageSize, String sortBy, String sortDir) {
+
+    public TimezoneTableResponseModel getAllUserTimeZone(int pageNo, int pageSize, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Timezone> mapToResponse = timezoneRepository.findAll(pageable);
 
-        return mapToResponse(mapToResponse);
-    }
-
-    public TimezoneResponse getUserTimeZone(Long userId, int pageNo, int pageSize, String sortBy, String sortDir) {
-        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Timezone> timezones = null;//timezoneRepository.findByUserId(userId, pageable);
+        Page<Timezone> timezones = timezoneRepository.findAll(pageable);
 
         return mapToResponse(timezones);
     }
 
-    public Timezone getSingleTimeZone(Long id) {
-        Optional<Timezone> timezone = timezoneRepository.findById(id);
-        return timezone.get();
-    }
 
-    public void saveTimezone(Timezone timezone) {
-        Timezone existingEntry = timezoneRepository.findByName(timezone.getName());
+    public TimezoneTableResponseModel getUserTimeZone(int pageNo, int pageSize, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = (String) authentication.getPrincipal();
-        if(existingEntry != null) {
-            //Update
-            // throw error for create, duplicate...
-            timezone.setId(existingEntry.getId());
-        }
+        Page<Timezone> timezones = timezoneRepository.findByEmail(userEmail, pageable);
+
+        return mapToResponse(timezones);
+    }
+
+    public void createTimezone(Timezone timezone) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = (String) authentication.getPrincipal();
         timezone.setEmail(userEmail);
         timezoneRepository.saveAndFlush(timezone);
+    }
 
+    public void updateTimezone(TimeZoneDataModel timeZoneDataModel) {
+        Timezone updatedValue = TimeZoneDataModel.of(timeZoneDataModel);
+        Timezone existingValue = timezoneRepository.findByName(timeZoneDataModel.getName());
+        if(existingValue == null) return;
+
+        updatedValue.setId(existingValue.getId());
+        updatedValue.setEmail(existingValue.getEmail());
+        timezoneRepository.saveAndFlush(updatedValue);
     }
 
 
-    public void deleteTimezoneById(Long id) {
-        timezoneRepository.deleteById(id);
+    public void deleteTimezoneByName(String name) {
+        timezoneRepository.deleteByName(name);
     }
 
 
-    private TimezoneResponse mapToResponse(Page<Timezone> timezones) {
-        TimezoneResponse timezoneResponse = new TimezoneResponse();
-        timezoneResponse.setTimezoneList(timezones.getContent());
-        timezoneResponse.setPageNo(timezones.getNumber());
-        timezoneResponse.setPageSize(timezones.getSize());
-        timezoneResponse.setTotalElements(timezones.getTotalElements());
-        timezoneResponse.setTotalPages(timezones.getTotalPages());
-        timezoneResponse.setLast(timezones.isLast());
 
-        return timezoneResponse;
+    private TimezoneTableResponseModel mapToResponse(Page<Timezone> timezones) {
+        List<TimeZoneDataModel> timeZoneDataModelList = timezones.getContent()
+                .stream()
+                .map((e) -> TimeZoneDataModel.from(e))
+                .collect(Collectors.toList());
+
+        TimezoneTableResponseModel timezoneTableResponse = new TimezoneTableResponseModel();
+        timezoneTableResponse.setTimeZoneDataModelList(timeZoneDataModelList);
+        timezoneTableResponse.setPageNo(timezones.getNumber());
+        timezoneTableResponse.setPageSize(timezones.getSize());
+        timezoneTableResponse.setTotalElements(timezones.getTotalElements());
+        timezoneTableResponse.setTotalPages(timezones.getTotalPages());
+
+        return timezoneTableResponse;
     }
 }

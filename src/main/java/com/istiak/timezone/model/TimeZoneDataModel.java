@@ -22,4 +22,14 @@ public class TimeZoneDataModel {
 
         return timezone;
     }
+
+    public static TimeZoneDataModel from(Timezone timezone) {
+        TimeZoneDataModel timeZoneDataModel = new TimeZoneDataModel();
+        timeZoneDataModel.setName(timezone.getName());
+        timeZoneDataModel.setCity(timezone.getCity());
+        timeZoneDataModel.setHourDiff(timezone.getHourdiff());
+        timeZoneDataModel.setMinuteDiff(timezone.getMindiff());
+
+        return timeZoneDataModel;
+    }
 }

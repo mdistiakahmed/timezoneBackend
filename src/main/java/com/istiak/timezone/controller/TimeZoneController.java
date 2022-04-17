@@ -4,7 +4,7 @@ import com.istiak.timezone.constants.RestApiConstants;
 import com.istiak.timezone.model.AuthorityConstants;
 import com.istiak.timezone.model.TimeZoneDataModel;
 import com.istiak.timezone.model.Timezone;
-import com.istiak.timezone.model.TimezoneResponse;
+import com.istiak.timezone.model.TimezoneTableResponseModel;
 import com.istiak.timezone.service.TimeZoneValidationService;
 import com.istiak.timezone.service.TimezoneService;
 import org.json.JSONObject;
@@ -30,31 +30,31 @@ public class TimeZoneController {
     @RequestMapping(value="timezones",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
-    @RolesAllowed({AuthorityConstants.ADMIN})
-    public ResponseEntity<TimezoneResponse> getAllTimeZones(
+    @RolesAllowed({AuthorityConstants.ADMIN, AuthorityConstants.USER})
+    public ResponseEntity<TimezoneTableResponseModel> getUserTimeZones(
             @RequestParam(value = "pageNo", defaultValue = RestApiConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
             @RequestParam(value = "pageSize", defaultValue = RestApiConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize,
             @RequestParam(value = "sortBy", defaultValue = RestApiConstants.DEFAULT_SORT_BY, required = false) String sortBy,
             @RequestParam(value = "sortDir", defaultValue = RestApiConstants.DEFAULT_SORT_DIRECTION, required = false) String sortDir
     ){
-        TimezoneResponse timezoneResponse = timezoneService.getAllTimeZone(pageNo,pageSize,sortBy,sortDir);
+        TimezoneTableResponseModel timezoneResponse = timezoneService.getUserTimeZone(pageNo,pageSize,sortBy,sortDir);
         return ResponseEntity.ok(timezoneResponse);
     }
 
-    @RequestMapping(value="timezones/users/{userid}",
+    @RequestMapping(value="timezones/all",
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN})
-    public ResponseEntity<TimezoneResponse> getUserTimezone(
-            @PathVariable Long userid,
+    public ResponseEntity<TimezoneTableResponseModel> getAllUserTimezone(
             @RequestParam(value = "pageNo", defaultValue = RestApiConstants.DEFAULT_PAGE_NUMBER, required = false) int pageNo,
             @RequestParam(value = "pageSize", defaultValue = RestApiConstants.DEFAULT_PAGE_SIZE, required = false) int pageSize,
             @RequestParam(value = "sortBy", defaultValue = RestApiConstants.DEFAULT_SORT_BY, required = false) String sortBy,
             @RequestParam(value = "sortDir", defaultValue = RestApiConstants.DEFAULT_SORT_DIRECTION, required = false) String sortDir
     ){
-        TimezoneResponse timezoneResponse = timezoneService.getUserTimeZone(userid,pageNo,pageSize,sortBy,sortDir);
+        TimezoneTableResponseModel timezoneResponse = timezoneService.getAllUserTimeZone(pageNo,pageSize,sortBy,sortDir);
         return ResponseEntity.ok(timezoneResponse);
     }
+
 
     @RequestMapping(value="timezone",
             method = RequestMethod.POST,
@@ -69,27 +69,42 @@ public class TimeZoneController {
             return new ResponseEntity<>(response.toString(),HttpStatus.BAD_REQUEST);
         }
         Timezone timezone = TimeZoneDataModel.of(timeZoneDataModel);
-        timezoneService.saveTimezone(timezone);
+        timezoneService.createTimezone(timezone);
         return new ResponseEntity<>(response.toString(), HttpStatus.CREATED);
     }
 
-    @RequestMapping(value="timezones",
+
+    @RequestMapping(value="timezone",
             method = RequestMethod.PUT,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN, AuthorityConstants.USER})
-    public ResponseEntity<Void> updateTimezone(@RequestBody Timezone timezone){
-        //TODO: validation for one user updating another user info
-        timezoneService.saveTimezone(timezone);
+    public ResponseEntity<String> updateTimezone(@RequestBody TimeZoneDataModel timeZoneDataModel){
+        JSONObject response = new JSONObject();
+
+        String errors = timeZoneValidationService.validateForUpdate(timeZoneDataModel);
+        if(errors.length() != 0) {
+            response.put("msg", errors);
+            HttpStatus httpStatus = errors.contains("permission") ? HttpStatus.FORBIDDEN : HttpStatus.BAD_REQUEST;
+            return new ResponseEntity<>(response.toString(),httpStatus);
+        }
+        timezoneService.updateTimezone(timeZoneDataModel);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @RequestMapping(value="timezones/{id}",
+
+    @RequestMapping(value="timezones/{name}",
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN, AuthorityConstants.USER})
-    public ResponseEntity<Void> deleteTimezone(@PathVariable Long id){
-        //TODO: validation for one user deleting another user info
-        timezoneService.deleteTimezoneById(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<String> deleteTimezone(@PathVariable String name){
+        JSONObject response = new JSONObject();
+
+        String errors = timeZoneValidationService.validateForDelete(name);
+        if(errors.length() != 0) {
+            response.put("msg", errors);
+            return new ResponseEntity<>(response.toString(),HttpStatus.BAD_REQUEST);
+        }
+        timezoneService.deleteTimezoneByName(name);
+        return new ResponseEntity<>(response.toString(), HttpStatus.OK);
     }
 }

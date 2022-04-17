@@ -4,9 +4,13 @@ import com.istiak.timezone.model.TimeZoneDataModel;
 import com.istiak.timezone.model.Timezone;
 import com.istiak.timezone.repository.TimezoneRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Time;
+import java.util.Collection;
+import java.util.Optional;
 
 @Service
 public class TimeZoneValidationService {
@@ -22,6 +26,39 @@ public class TimeZoneValidationService {
             return "TimeZone with same name already present. Use different name";
         }
         else return "";
+    }
+
+    public String validateForDelete(String name) {
+        StringBuffer errorMsg = new StringBuffer("");
+        if(name == null || name.trim().isEmpty()) {
+            errorMsg.append("TimeZone name is empty, nothing to delete");
+        } else {
+            Timezone timezone =  timezoneRepository.findByName(name);
+            if(timezone == null) {
+                errorMsg.append("No timezone with this name exists. Aborting delete");
+            }
+        }
+
+        return errorMsg.toString();
+    }
+
+    public String validateForUpdate(TimeZoneDataModel timeZoneDataModel) {
+        if(timeZoneDataModel == null || timeZoneDataModel.getName().trim().isEmpty()) {
+            return "Invalid data, nothing to update";
+        }
+
+        Timezone timezone = timezoneRepository.findByName(timeZoneDataModel.getName());
+        if(timezone == null) {
+            return "This timezone doesn't exist";
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = (String) authentication.getPrincipal();
+        if(timezone.getEmail() != userEmail && !checkIfUserHasAdminRole()) {
+            return "User doesn't have permission to delete";
+        }
+
+        return "";
     }
 
     public String checkIfValidTimeZone(TimeZoneDataModel timeZoneDataModel) {
@@ -52,5 +89,18 @@ public class TimeZoneValidationService {
         Timezone timezone =  timezoneRepository.findByName(timeZoneDataModel.getName());
 
         return timezone != null;
+    }
+
+    private Boolean checkIfUserHasAdminRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        Optional<? extends GrantedAuthority> authority = authorities.stream()
+                .filter(a -> a.getAuthority().equalsIgnoreCase("ROLE_ADMIN"))
+                .findFirst();
+        if(authority.isPresent()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
