@@ -32,6 +32,6 @@ public class Timezone {
 
     @NotNull
     @Column
-    private Long userId;
+    private String email;
 
 }

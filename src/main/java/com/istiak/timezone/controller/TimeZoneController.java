@@ -2,9 +2,12 @@ package com.istiak.timezone.controller;
 
 import com.istiak.timezone.constants.RestApiConstants;
 import com.istiak.timezone.model.AuthorityConstants;
+import com.istiak.timezone.model.TimeZoneDataModel;
 import com.istiak.timezone.model.Timezone;
 import com.istiak.timezone.model.TimezoneResponse;
+import com.istiak.timezone.service.TimeZoneValidationService;
 import com.istiak.timezone.service.TimezoneService;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,12 +16,16 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.security.RolesAllowed;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/v1")
 public class TimeZoneController {
 
     @Autowired
     private TimezoneService timezoneService;
+
+    @Autowired
+    private TimeZoneValidationService timeZoneValidationService;
 
     @RequestMapping(value="timezones",
             method = RequestMethod.GET,
@@ -49,14 +56,21 @@ public class TimeZoneController {
         return ResponseEntity.ok(timezoneResponse);
     }
 
-    @RequestMapping(value="timezones",
+    @RequestMapping(value="timezone",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RolesAllowed({AuthorityConstants.ADMIN, AuthorityConstants.USER})
-    public ResponseEntity<Void> createTimezone(@RequestBody Timezone timezone){
-        //TODO: validation or exception handling for same timezone name
+    public ResponseEntity<String> createTimezone(@RequestBody TimeZoneDataModel timeZoneDataModel){
+        JSONObject response = new JSONObject();
+
+        String errors = timeZoneValidationService.validateForCreate(timeZoneDataModel);
+        if(errors.length() != 0) {
+            response.put("msg", errors);
+            return new ResponseEntity<>(response.toString(),HttpStatus.BAD_REQUEST);
+        }
+        Timezone timezone = TimeZoneDataModel.of(timeZoneDataModel);
         timezoneService.saveTimezone(timezone);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        return new ResponseEntity<>(response.toString(), HttpStatus.CREATED);
     }
 
     @RequestMapping(value="timezones",

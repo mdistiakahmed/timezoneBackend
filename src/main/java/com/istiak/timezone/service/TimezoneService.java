@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +34,7 @@ public class TimezoneService {
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
-        Page<Timezone> timezones = timezoneRepository.findByUserId(userId, pageable);
+        Page<Timezone> timezones = null;//timezoneRepository.findByUserId(userId, pageable);
 
         return mapToResponse(timezones);
     }
@@ -44,10 +46,14 @@ public class TimezoneService {
 
     public void saveTimezone(Timezone timezone) {
         Timezone existingEntry = timezoneRepository.findByName(timezone.getName());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = (String) authentication.getPrincipal();
         if(existingEntry != null) {
             //Update
+            // throw error for create, duplicate...
             timezone.setId(existingEntry.getId());
         }
+        timezone.setEmail(userEmail);
         timezoneRepository.saveAndFlush(timezone);
 
     }
